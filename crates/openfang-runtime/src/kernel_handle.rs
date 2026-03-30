@@ -37,6 +37,19 @@ pub trait KernelHandle: Send + Sync {
     /// Send a message to another agent and get the response.
     async fn send_to_agent(&self, agent_id: &str, message: &str) -> Result<String, String>;
 
+    /// Send a message with content blocks (text + images) to another agent.
+    /// Used by agent_send when attachments (image file paths) are provided.
+    /// Default: falls back to text-only send_to_agent.
+    async fn send_to_agent_with_blocks(
+        &self,
+        agent_id: &str,
+        message: &str,
+        blocks: Vec<openfang_types::message::ContentBlock>,
+    ) -> Result<String, String> {
+        let _ = blocks;
+        self.send_to_agent(agent_id, message).await
+    }
+
     /// List all running agents.
     fn list_agents(&self) -> Vec<AgentInfo>;
 

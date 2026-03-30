@@ -620,12 +620,17 @@ pub fn builtin_tool_definitions() -> Vec<ToolDefinition> {
         // --- Inter-agent tools ---
         ToolDefinition {
             name: "agent_send".to_string(),
-            description: "Send a message to another agent and receive their response. Accepts UUID or agent name. Use agent_find first to discover agents.".to_string(),
+            description: "Send a message to another agent and receive their response. Accepts UUID or agent name. Use agent_find first to discover agents. Optionally attach image files for vision-capable agents.".to_string(),
             input_schema: serde_json::json!({
                 "type": "object",
                 "properties": {
                     "agent_id": { "type": "string", "description": "The target agent's UUID or name" },
-                    "message": { "type": "string", "description": "The message to send to the agent" }
+                    "message": { "type": "string", "description": "The message to send to the agent" },
+                    "attachments": {
+                        "type": "array",
+                        "description": "Optional array of absolute file paths to images to attach (png, jpg, gif, webp). The target agent will receive the images as inline content blocks.",
+                        "items": { "type": "string" }
+                    }
                 },
                 "required": ["agent_id", "message"]
             }),
@@ -1611,9 +1616,33 @@ async fn tool_agent_send(
         ));
     }
 
+    // Build content blocks from optional attachments (image file paths or IDs)
+    let mut blocks: Vec<openfang_types::message::ContentBlock> = Vec::new();
+    if let Some(attachments) = input.get("attachments").and_then(|a| a.as_array()) {
+        for attachment in attachments {
+            if let Some(ref_val) = attachment.as_str() {
+                // If it's a UUID, it's an API upload. If it's a path, it's a local file.
+                // We'll treat both as 'id' for the block and the resolver will handle it.
+                blocks.push(openfang_types::message::ContentBlock::Attachment {
+                    id: ref_val.to_string(),
+                    media_type: None, // Will be detected during hydration
+                    path: if std::path::Path::new(ref_val).is_absolute() {
+                        Some(ref_val.to_string())
+                    } else {
+                        None
+                    },
+                });
+            }
+        }
+    }
+
     AGENT_CALL_DEPTH
         .scope(std::cell::Cell::new(current_depth + 1), async {
-            kh.send_to_agent(agent_id, message).await
+            if blocks.is_empty() {
+                kh.send_to_agent(agent_id, message).await
+            } else {
+                kh.send_to_agent_with_blocks(agent_id, message, blocks).await
+            }
         })
         .await
 }

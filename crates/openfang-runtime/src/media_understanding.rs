@@ -35,21 +35,153 @@ impl MediaEngine {
             return Err("Expected image attachment".into());
         }
 
-        // Determine which provider to use
         let provider = self.config.image_provider.as_deref()
             .or_else(|| detect_vision_provider())
-            .ok_or("No vision-capable LLM provider configured. Set ANTHROPIC_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY")?;
+            .ok_or("No vision-capable LLM provider configured. Set LMSTUDIO_BASE_URL, ANTHROPIC_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY")?;
 
-        // For now, return a structured result indicating the provider.
-        // Actual API call would go here using reqwest.
+        let model = default_vision_model(provider);
+
+        // Convert image to base64
+        let image_b64 = match &attachment.source {
+            MediaSource::FilePath { path } => {
+                use base64::Engine;
+                let bytes = tokio::fs::read(path).await
+                    .map_err(|e| format!("Failed to read image: {}", e))?;
+                base64::engine::general_purpose::STANDARD.encode(&bytes)
+            }
+            MediaSource::Base64 { data, .. } => data.clone(),
+            MediaSource::Url { .. } => {
+                return Err("URL image sources not supported yet".into());
+            }
+        };
+
+        // Build API request
+        let (api_url, api_key, body) = match provider {
+            "lmstudio" => {
+                let base = std::env::var("LMSTUDIO_BASE_URL")
+                    .unwrap_or_else(|_| "http://localhost:1234".to_string());
+                let url = format!("{}/v1/chat/completions", base.trim_end_matches('/'));
+                
+                let body = serde_json::json!({
+                    "model": model,
+                    "messages": [{
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": format!("data:{};base64,{}", attachment.mime_type, image_b64)
+                                }
+                            },
+                            {
+                                "type": "text",
+                                "text": "Describe this image in detail."
+                            }
+                        ]
+                    }],
+                    "max_tokens": 500,
+                    "temperature": 0.7
+                });
+                
+                (url, String::new(), body)
+            }
+            "openai" => {
+                let key = std::env::var("OPENAI_API_KEY")
+                    .map_err(|_| "OPENAI_API_KEY not set")?;
+                let body = serde_json::json!({
+                    "model": model,
+                    "messages": [{
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": format!("data:{};base64,{}", attachment.mime_type, image_b64)
+                                }
+                            },
+                            {
+                                "type": "text",
+                                "text": "Describe this image in detail."
+                            }
+                        ]
+                    }],
+                    "max_tokens": 500
+                });
+                ("https://api.openai.com/v1/chat/completions".to_string(), key, body)
+            }
+            "anthropic" => {
+                let key = std::env::var("ANTHROPIC_API_KEY")
+                    .map_err(|_| "ANTHROPIC_API_KEY not set")?;
+                let body = serde_json::json!({
+                    "model": model,
+                    "messages": [{
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "Describe this image in detail."
+                            },
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": attachment.mime_type,
+                                    "data": image_b64
+                                }
+                            }
+                        ]
+                    }],
+                    "max_tokens": 500
+                });
+                ("https://api.anthropic.com/v1/messages".to_string(), key, body)
+            }
+            _ => return Err(format!("Vision provider {} not implemented", provider)),
+        };
+
+        // Make request
+        let client = reqwest::Client::new();
+        let mut req = client.post(&api_url)
+            .json(&body)
+            .timeout(std::time::Duration::from_secs(30));
+        
+        if !api_key.is_empty() {
+            if provider == "anthropic" {
+                req = req.header("x-api-key", &api_key)
+                         .header("anthropic-version", "2023-06-01");
+            } else {
+                req = req.bearer_auth(&api_key);
+            }
+        }
+
+        let resp = req.send().await
+            .map_err(|e| format!("Vision API failed: {}", e))?;
+
+        if !resp.status().is_success() {
+            let status = resp.status();
+            let err = resp.text().await.unwrap_or_default();
+            return Err(format!("Vision API error ({}): {}", status, err));
+        }
+
+        let result: serde_json::Value = resp.json().await
+            .map_err(|e| format!("Parse failed: {}", e))?;
+
+        let description = if provider == "anthropic" {
+            result["content"][0]["text"]
+                .as_str()
+                .ok_or("No content in response")?
+                .to_string()
+        } else {
+            result["choices"][0]["message"]["content"]
+                .as_str()
+                .ok_or("No content in response")?
+                .to_string()
+        };
+
         Ok(MediaUnderstanding {
             media_type: MediaType::Image,
-            description: format!(
-                "[Image description would be generated by {} provider]",
-                provider
-            ),
+            description,
             provider: provider.to_string(),
-            model: default_vision_model(provider).to_string(),
+            model: model.to_string(),
         })
     }
 
@@ -244,6 +376,10 @@ impl MediaEngine {
 
 /// Detect which vision provider is available based on environment variables.
 fn detect_vision_provider() -> Option<&'static str> {
+    // LM Studio check first (local = fastest)
+    if std::env::var("LMSTUDIO_BASE_URL").is_ok() {
+        return Some("lmstudio");
+    }
     if std::env::var("ANTHROPIC_API_KEY").is_ok() {
         return Some("anthropic");
     }
@@ -372,6 +508,7 @@ fn detect_audio_provider() -> Option<&'static str> {
 /// Get the default vision model for a provider.
 fn default_vision_model(provider: &str) -> &str {
     match provider {
+        "lmstudio" => "qwen/qwen3.5-9b",
         "anthropic" => "claude-sonnet-4-20250514",
         "openai" => "gpt-4o",
         "gemini" => "gemini-2.5-flash",

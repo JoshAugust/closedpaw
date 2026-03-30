@@ -586,6 +586,9 @@ impl SessionStore {
                             ContentBlock::Image { media_type, .. } => {
                                 text_parts.push(format!("[image: {media_type}]"));
                             }
+                            ContentBlock::Attachment { id, .. } => {
+                                text_parts.push(format!("[attachment: {id}]"));
+                            }
                             ContentBlock::Thinking { thinking } => {
                                 text_parts.push(format!(
                                     "[thinking: {}]",

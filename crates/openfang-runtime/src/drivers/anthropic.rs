@@ -595,6 +595,7 @@ fn convert_message(msg: &Message) -> ApiMessage {
                         is_error: *is_error,
                     }),
                     ContentBlock::Thinking { .. } => None,
+                    ContentBlock::Attachment { .. } => None,
                     ContentBlock::Unknown => None,
                 })
                 .collect();

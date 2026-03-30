@@ -470,19 +470,30 @@ async fn handle_text_message(
                     .and_then(|cat| cat.find_model(&model_name).map(|m| m.supports_vision))
                     .unwrap_or(false);
                 if !supports_vision {
-                    let _ = send_json(
-                        sender,
-                        &serde_json::json!({
-                            "type": "command_result",
-                            "message": format!(
-                                "**Vision not supported** — the current model `{}` cannot analyze images. \
-                                 Switch to a vision-capable model (e.g. `gemini-2.5-flash`, `claude-sonnet-4-20250514`, `gpt-4o`) \
-                                 with `/model <name>` for image analysis.",
-                                model_name
-                            ),
-                        }),
-                    )
-                    .await;
+                    // Vision Hack: Allow LM Studio to pass through even if not flagged as vision-capable,
+                    // as the agent loop will auto-describe images via the MediaEngine bridge.
+                    let is_lmstudio = state
+                        .kernel
+                        .registry
+                        .get(agent_id)
+                        .map(|e| e.manifest.model.provider == "lmstudio")
+                        .unwrap_or(false);
+
+                    if !is_lmstudio {
+                        let _ = send_json(
+                            sender,
+                            &serde_json::json!({
+                                "type": "command_result",
+                                "message": format!(
+                                    "**Vision not supported** — the current model `{}` cannot analyze images. \
+                                     Switch to a vision-capable model (e.g. `gemini-2.5-flash`, `claude-sonnet-4-20250514`, `gpt-4o`) \
+                                     with `/model <name>` for image analysis.",
+                                    model_name
+                                ),
+                            }),
+                        )
+                        .await;
+                    }
                 }
             }
 

@@ -1,0 +1,79 @@
+  >> OpenFang Agent OS
+     The open-source agent operating system
+
+  Starting daemon...
+
+[2m2026-03-22T01:10:15.751360Z[0m [32m INFO[0m [2mopenfang_kernel::config[0m[2m:[0m Loaded configuration [3mpath[0m[2m=[0m/Users/aziz/.openfang/config.toml
+[2m2026-03-22T01:10:15.751439Z[0m [32m INFO[0m [2mopenfang_kernel::kernel[0m[2m:[0m Booting OpenFang kernel...
+[2m2026-03-22T01:10:15.756756Z[0m [32m INFO[0m [2mopenfang_kernel::kernel[0m[2m:[0m Model catalog: 199 models, 8 available from configured providers (6 local)
+[2m2026-03-22T01:10:15.762286Z[0m [32m INFO[0m [2mopenfang_skills::registry[0m[2m:[0m Loaded 60 bundled skill(s)
+[2m2026-03-22T01:10:15.762331Z[0m [32m INFO[0m [2mopenfang_kernel::kernel[0m[2m:[0m Loaded 60 bundled skill(s)
+[2m2026-03-22T01:10:15.762665Z[0m [32m INFO[0m [2mopenfang_hands::registry[0m[2m:[0m Loaded bundled hand [3mhand[0m[2m=[0mclip [3mname[0m[2m=[0mClip Hand
+[2m2026-03-22T01:10:15.762802Z[0m [32m INFO[0m [2mopenfang_hands::registry[0m[2m:[0m Loaded bundled hand [3mhand[0m[2m=[0mlead [3mname[0m[2m=[0mLead Hand
+[2m2026-03-22T01:10:15.762908Z[0m [32m INFO[0m [2mopenfang_hands::registry[0m[2m:[0m Loaded bundled hand [3mhand[0m[2m=[0mcollector [3mname[0m[2m=[0mCollector Hand
+[2m2026-03-22T01:10:15.763016Z[0m [32m INFO[0m [2mopenfang_hands::registry[0m[2m:[0m Loaded bundled hand [3mhand[0m[2m=[0mpredictor [3mname[0m[2m=[0mPredictor Hand
+[2m2026-03-22T01:10:15.763127Z[0m [32m INFO[0m [2mopenfang_hands::registry[0m[2m:[0m Loaded bundled hand [3mhand[0m[2m=[0mresearcher [3mname[0m[2m=[0mResearcher Hand
+[2m2026-03-22T01:10:15.763251Z[0m [32m INFO[0m [2mopenfang_hands::registry[0m[2m:[0m Loaded bundled hand [3mhand[0m[2m=[0mtwitter [3mname[0m[2m=[0mTwitter Hand
+[2m2026-03-22T01:10:15.763334Z[0m [32m INFO[0m [2mopenfang_hands::registry[0m[2m:[0m Loaded bundled hand [3mhand[0m[2m=[0mbrowser [3mname[0m[2m=[0mBrowser Hand
+[2m2026-03-22T01:10:15.763522Z[0m [32m INFO[0m [2mopenfang_hands::registry[0m[2m:[0m Loaded bundled hand [3mhand[0m[2m=[0mtrader [3mname[0m[2m=[0mTrading Hand
+[2m2026-03-22T01:10:15.763526Z[0m [32m INFO[0m [2mopenfang_kernel::kernel[0m[2m:[0m Loaded 8 bundled hand(s)
+[2m2026-03-22T01:10:15.763945Z[0m [32m INFO[0m [2mopenfang_kernel::kernel[0m[2m:[0m Extension registry: 25 templates available, 0 installed
+[2m2026-03-22T01:10:15.764094Z[0m [32m INFO[0m [2mopenfang_kernel::kernel[0m[2m:[0m Embedding driver auto-detected: Ollama (local) [3mmodel[0m[2m=[0mnomic-embed-text
+[2m2026-03-22T01:10:15.764413Z[0m [32m INFO[0m [2mopenfang_kernel::cron[0m[2m:[0m Loaded cron jobs from disk [3mcount[0m[2m=[0m0
+[2m2026-03-22T01:10:15.765231Z[0m [32m INFO[0m [2mopenfang_runtime::audit[0m[2m:[0m Audit trail loaded: 84 entries, chain integrity OK
+[2m2026-03-22T01:10:15.765921Z[0m [32m INFO[0m [2mopenfang_kernel::kernel[0m[2m:[0m Agent TOML on disk differs from DB, updating [3magent[0m[2m=[0massistant
+[2m2026-03-22T01:10:15.766204Z[0m [32m INFO[0m [2mopenfang_kernel::kernel[0m[2m:[0m Restored 6 agent(s) from persistent storage
+[2m2026-03-22T01:10:15.766252Z[0m [32m INFO[0m [2mopenfang_kernel::kernel[0m[2m:[0m OpenFang kernel booted successfully
+  ✔ Kernel booted (lmstudio/qwen/qwen3.5-9b)
+  ✔ 199 models available
+  ✔ 6 agent(s) loaded
+
+  API:         http://127.0.0.1:4200
+  Dashboard:   http://127.0.0.1:4200/
+  Provider:    lmstudio
+  Model:       qwen/qwen3.5-9b
+
+  hint: Open the dashboard in your browser, or run `openfang chat`
+  hint: Press Ctrl+C to stop the daemon
+
+[2m2026-03-22T01:10:15.766375Z[0m [32m INFO[0m [2mopenfang_kernel::kernel[0m[2m:[0m Heartbeat monitor started (interval: 30s)
+[2m2026-03-22T01:10:15.766390Z[0m [32m INFO[0m [2mopenfang_kernel::kernel[0m[2m:[0m Memory consolidation scheduled every 24 hour(s)
+[2m2026-03-22T01:10:15.768884Z[0m [33m WARN[0m [2mopenfang_kernel::kernel[0m[2m:[0m Local provider offline [3mprovider[0m[2m=[0mollama [3merror[0m[2m=[0m"error sending request for url (http://localhost:11434/api/tags)"
+[2m2026-03-22T01:10:15.769528Z[0m [33m WARN[0m [2mopenfang_kernel::kernel[0m[2m:[0m Local provider offline [3mprovider[0m[2m=[0mvllm [3merror[0m[2m=[0m"error sending request for url (http://localhost:8000/v1/models)"
+[2m2026-03-22T01:10:15.792307Z[0m [32m INFO[0m [2mopenfang_kernel::kernel[0m[2m:[0m Local provider online [3mprovider[0m[2m=[0mlmstudio [3mmodels[0m[2m=[0m4 [3mlatency_ms[0m[2m=[0m22
+[2m2026-03-22T01:10:15.793855Z[0m [33m WARN[0m [2mopenfang_kernel::kernel[0m[2m:[0m Local provider offline [3mprovider[0m[2m=[0mlemonade [3merror[0m[2m=[0m"error sending request for url (http://localhost:8888/api/v1/models)"
+[2m2026-03-22T01:10:15.793919Z[0m [33m WARN[0m [2mopenfang_kernel::kernel[0m[2m:[0m Local provider offline [3mprovider[0m[2m=[0mclaude-code [3merror[0m[2m=[0m"builder error"
+[2m2026-03-22T01:10:15.793943Z[0m [33m WARN[0m [2mopenfang_kernel::kernel[0m[2m:[0m Local provider offline [3mprovider[0m[2m=[0mqwen-code [3merror[0m[2m=[0m"builder error"
+[2m2026-03-22T01:10:15.968101Z[0m [32m INFO[0m [2mopenfang_api::server[0m[2m:[0m OpenFang API server listening on http://127.0.0.1:4200
+[2m2026-03-22T01:10:15.968116Z[0m [32m INFO[0m [2mopenfang_api::server[0m[2m:[0m WebChat UI available at http://127.0.0.1:4200/
+[2m2026-03-22T01:10:15.968120Z[0m [32m INFO[0m [2mopenfang_api::server[0m[2m:[0m WebSocket endpoint: ws://127.0.0.1:4200/api/agents/{id}/ws
+[2m2026-03-22T01:10:16.646546Z[0m [32m INFO[0m [2mopenfang_runtime::mcp[0m[2m:[0m MCP server connected [3mserver[0m[2m=[0mcaffy [3mtools[0m[2m=[0m3
+[2m2026-03-22T01:10:16.646707Z[0m [32m INFO[0m [2mopenfang_kernel::kernel[0m[2m:[0m MCP server connected [3mserver[0m[2m=[0mcaffy [3mtools[0m[2m=[0m3
+[2m2026-03-22T01:10:16.646730Z[0m [32m INFO[0m [2mopenfang_kernel::kernel[0m[2m:[0m MCP: 3 tools available from 1 server(s)
+[2m2026-03-22T01:10:16.816955Z[0m [32m INFO[0m [2mopenfang_api::middleware[0m[2m:[0m API request [3mrequest_id[0m[2m=[0mb7f745c5-342e-4104-b936-633d4eafab35 [3mmethod[0m[2m=[0mGET [3mpath[0m[2m=[0m/api/agents/db982148-0401-4c40-89ab-9ef8e42faf2f/ws [3mstatus[0m[2m=[0m101 [3mlatency_ms[0m[2m=[0m0
+[2m2026-03-22T01:10:16.817057Z[0m [32m INFO[0m [2mopenfang_api::ws[0m[2m:[0m WebSocket connected [3magent_id[0m[2m=[0mdb982148-0401-4c40-89ab-9ef8e42faf2f
+[2m2026-03-22T01:10:17.498446Z[0m [32m INFO[0m [2mopenfang_api::middleware[0m[2m:[0m API request [3mrequest_id[0m[2m=[0m30c284e1-9bc6-4ff5-827e-bbfa25853911 [3mmethod[0m[2m=[0mGET [3mpath[0m[2m=[0m/api/status [3mstatus[0m[2m=[0m200 [3mlatency_ms[0m[2m=[0m0
+[2m2026-03-22T01:10:17.498789Z[0m [32m INFO[0m [2mopenfang_api::middleware[0m[2m:[0m API request [3mrequest_id[0m[2m=[0m61c0ab13-e754-4aca-9c2b-33612c4bc9d9 [3mmethod[0m[2m=[0mGET [3mpath[0m[2m=[0m/api/approvals [3mstatus[0m[2m=[0m200 [3mlatency_ms[0m[2m=[0m0
+[2m2026-03-22T01:10:17.503865Z[0m [32m INFO[0m [2mopenfang_api::middleware[0m[2m:[0m API request [3mrequest_id[0m[2m=[0m4b874ab3-0b2e-4bea-ab8b-4cb1bd302792 [3mmethod[0m[2m=[0mGET [3mpath[0m[2m=[0m/api/agents [3mstatus[0m[2m=[0m200 [3mlatency_ms[0m[2m=[0m0
+[2m2026-03-22T01:10:20.905717Z[0m [32m INFO[0m [2mopenfang_api::middleware[0m[2m:[0m API request [3mrequest_id[0m[2m=[0md98c3847-e47a-4fb7-8063-a74b7a2d028e [3mmethod[0m[2m=[0mGET [3mpath[0m[2m=[0m/api/health [3mstatus[0m[2m=[0m200 [3mlatency_ms[0m[2m=[0m0
+[2m2026-03-22T01:10:20.909151Z[0m [32m INFO[0m [2mopenfang_api::middleware[0m[2m:[0m API request [3mrequest_id[0m[2m=[0m00b6dde2-13d7-409e-8bad-4360f3a6de57 [3mmethod[0m[2m=[0mGET [3mpath[0m[2m=[0m/api/agents [3mstatus[0m[2m=[0m200 [3mlatency_ms[0m[2m=[0m0
+[2m2026-03-22T01:10:20.947090Z[0m [32m INFO[0m [2mopenfang_api::middleware[0m[2m:[0m API request [3mrequest_id[0m[2m=[0m4a8bd08e-6ed6-4227-a468-4ac272dc9522 [3mmethod[0m[2m=[0mGET [3mpath[0m[2m=[0m/api/health [3mstatus[0m[2m=[0m200 [3mlatency_ms[0m[2m=[0m0
+[2m2026-03-22T01:10:22.464656Z[0m [32m INFO[0m [2mopenfang_api::middleware[0m[2m:[0m API request [3mrequest_id[0m[2m=[0m5a52fee4-eef8-4ecf-8e93-68e2f478b552 [3mmethod[0m[2m=[0mGET [3mpath[0m[2m=[0m/api/status [3mstatus[0m[2m=[0m200 [3mlatency_ms[0m[2m=[0m0
+[2m2026-03-22T01:10:22.465387Z[0m [32m INFO[0m [2mopenfang_api::middleware[0m[2m:[0m API request [3mrequest_id[0m[2m=[0maf3a939f-ff5c-47ad-a8ba-079c21d7f63f [3mmethod[0m[2m=[0mGET [3mpath[0m[2m=[0m/api/approvals [3mstatus[0m[2m=[0m200 [3mlatency_ms[0m[2m=[0m0
+[2m2026-03-22T01:10:22.468477Z[0m [32m INFO[0m [2mopenfang_api::middleware[0m[2m:[0m API request [3mrequest_id[0m[2m=[0m0a500653-cfc2-4ab4-9404-cc31494414ee [3mmethod[0m[2m=[0mGET [3mpath[0m[2m=[0m/api/agents [3mstatus[0m[2m=[0m200 [3mlatency_ms[0m[2m=[0m0
+[2m2026-03-22T01:10:27.464260Z[0m [32m INFO[0m [2mopenfang_api::middleware[0m[2m:[0m API request [3mrequest_id[0m[2m=[0m066ef49a-6bc2-44a8-a2d1-20a73d55d5da [3mmethod[0m[2m=[0mGET [3mpath[0m[2m=[0m/api/status [3mstatus[0m[2m=[0m200 [3mlatency_ms[0m[2m=[0m0
+[2m2026-03-22T01:10:27.464851Z[0m [32m INFO[0m [2mopenfang_api::middleware[0m[2m:[0m API request [3mrequest_id[0m[2m=[0me860f374-b858-4446-a1ed-cc9a4db8b6d9 [3mmethod[0m[2m=[0mGET [3mpath[0m[2m=[0m/api/approvals [3mstatus[0m[2m=[0m200 [3mlatency_ms[0m[2m=[0m0
+[2m2026-03-22T01:10:27.468735Z[0m [32m INFO[0m [2mopenfang_api::middleware[0m[2m:[0m API request [3mrequest_id[0m[2m=[0m7393ef3d-7280-4006-9da6-d129626010ee [3mmethod[0m[2m=[0mGET [3mpath[0m[2m=[0m/api/agents [3mstatus[0m[2m=[0m200 [3mlatency_ms[0m[2m=[0m0
+[2m2026-03-22T01:10:32.465906Z[0m [32m INFO[0m [2mopenfang_api::middleware[0m[2m:[0m API request [3mrequest_id[0m[2m=[0m261650ee-d30b-41b7-bc80-0fb81477f071 [3mmethod[0m[2m=[0mGET [3mpath[0m[2m=[0m/api/status [3mstatus[0m[2m=[0m200 [3mlatency_ms[0m[2m=[0m0
+[2m2026-03-22T01:10:32.466590Z[0m [32m INFO[0m [2mopenfang_api::middleware[0m[2m:[0m API request [3mrequest_id[0m[2m=[0m467d7fde-652f-455a-8b32-c282e72d50c6 [3mmethod[0m[2m=[0mGET [3mpath[0m[2m=[0m/api/approvals [3mstatus[0m[2m=[0m200 [3mlatency_ms[0m[2m=[0m0
+[2m2026-03-22T01:10:32.469956Z[0m [32m INFO[0m [2mopenfang_api::middleware[0m[2m:[0m API request [3mrequest_id[0m[2m=[0md3429acc-7e0e-45aa-83c6-b157606bfe7f [3mmethod[0m[2m=[0mGET [3mpath[0m[2m=[0m/api/agents [3mstatus[0m[2m=[0m200 [3mlatency_ms[0m[2m=[0m0
+[2m2026-03-22T01:10:37.465248Z[0m [32m INFO[0m [2mopenfang_api::middleware[0m[2m:[0m API request [3mrequest_id[0m[2m=[0md8147eda-8818-4f2e-9b1e-a1bd0c6bc737 [3mmethod[0m[2m=[0mGET [3mpath[0m[2m=[0m/api/status [3mstatus[0m[2m=[0m200 [3mlatency_ms[0m[2m=[0m0
+[2m2026-03-22T01:10:37.465774Z[0m [32m INFO[0m [2mopenfang_api::middleware[0m[2m:[0m API request [3mrequest_id[0m[2m=[0mef1d79bd-aed4-407c-96cc-df25e066a544 [3mmethod[0m[2m=[0mGET [3mpath[0m[2m=[0m/api/approvals [3mstatus[0m[2m=[0m200 [3mlatency_ms[0m[2m=[0m0
+[2m2026-03-22T01:10:37.468899Z[0m [32m INFO[0m [2mopenfang_api::middleware[0m[2m:[0m API request [3mrequest_id[0m[2m=[0m3f9db6e1-5264-45ed-8cd7-0608af71bf8f [3mmethod[0m[2m=[0mGET [3mpath[0m[2m=[0m/api/agents [3mstatus[0m[2m=[0m200 [3mlatency_ms[0m[2m=[0m0
+[2m2026-03-22T01:10:38.493202Z[0m [32m INFO[0m [2mopenfang_api::server[0m[2m:[0m Received SIGTERM, shutting down...
+[2m2026-03-22T01:10:38.494166Z[0m [32m INFO[0m [2mopenfang_kernel::kernel[0m[2m:[0m Shutting down OpenFang kernel...
+[2m2026-03-22T01:10:38.494203Z[0m [32m INFO[0m [2mopenfang_kernel::supervisor[0m[2m:[0m Supervisor: initiating graceful shutdown
+[2m2026-03-22T01:10:38.495640Z[0m [32m INFO[0m [2mopenfang_kernel::kernel[0m[2m:[0m OpenFang kernel shut down (6 agents preserved)
+[2m2026-03-22T01:10:38.495660Z[0m [32m INFO[0m [2mopenfang_api::server[0m[2m:[0m OpenFang daemon stopped
+
+  OpenFang daemon stopped.

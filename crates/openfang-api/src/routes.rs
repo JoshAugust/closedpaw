@@ -250,7 +250,7 @@ pub fn resolve_attachments(
     let mut blocks = Vec::new();
 
     for att in attachments {
-        // Look up metadata from the upload registry
+        // Look up metadata from the upload registry to ensure it exists
         let meta = UPLOAD_REGISTRY.get(&att.file_id);
         let content_type = if let Some(ref m) = meta {
             m.content_type.clone()
@@ -270,19 +270,13 @@ pub fn resolve_attachments(
             continue;
         }
 
-        let file_path = upload_dir.join(&att.file_id);
-        match std::fs::read(&file_path) {
-            Ok(data) => {
-                let b64 = base64::engine::general_purpose::STANDARD.encode(&data);
-                blocks.push(openfang_types::message::ContentBlock::Image {
-                    media_type: content_type,
-                    data: b64,
-                });
-            }
-            Err(e) => {
-                tracing::warn!(file_id = %att.file_id, error = %e, "Failed to read upload for attachment");
-            }
-        }
+        // Return an Attachment reference block — the agent loop will hydrate it to base64
+        // only when calling the LLM, keeping the API response fast and memory light.
+        blocks.push(openfang_types::message::ContentBlock::Attachment {
+            id: att.file_id.clone(),
+            media_type: Some(content_type),
+            path: None, // Resolver in agent_loop knows to check upload_dir
+        });
     }
 
     blocks
@@ -506,6 +500,50 @@ pub async fn get_agent_session(
                                         }));
                                     }
                                 }
+                                openfang_types::message::ContentBlock::Attachment {
+                                    id,
+                                    path,
+                                    media_type,
+                                } => {
+                                    texts.push("[Attachment]".to_string());
+                                    let upload_dir = std::env::temp_dir().join("openfang_uploads");
+                                    let _ = std::fs::create_dir_all(&upload_dir);
+
+                                    // If ID is already a registered upload, use it.
+                                    // Otherwise, if it's a path, copy to upload dir and register.
+                                    if UPLOAD_REGISTRY.contains_key(id) {
+                                        let filename = UPLOAD_REGISTRY.get(id).map(|m| m.filename.clone()).unwrap_or_else(|| "image.png".to_string());
+                                        msg_images.push(serde_json::json!({
+                                            "file_id": id,
+                                            "filename": filename,
+                                        }));
+                                    } else if let Some(p) = path {
+                                        let path_buf = std::path::PathBuf::from(p);
+                                        if path_buf.exists() {
+                                            let file_id = uuid::Uuid::new_v4().to_string();
+                                            if let Ok(_) = std::fs::copy(&path_buf, upload_dir.join(&file_id)) {
+                                                let filename = path_buf.file_name().and_then(|n| n.to_str()).unwrap_or("image.png").to_string();
+                                                let mime = media_type.clone().unwrap_or_else(|| {
+                                                    match path_buf.extension().and_then(|e| e.to_str()) {
+                                                        Some("png") => "image/png".to_string(),
+                                                        Some("jpg" | "jpeg") => "image/jpeg".to_string(),
+                                                        Some("gif") => "image/gif".to_string(),
+                                                        Some("webp") => "image/webp".to_string(),
+                                                        _ => "image/png".to_string(),
+                                                    }
+                                                });
+                                                UPLOAD_REGISTRY.insert(file_id.clone(), UploadMeta {
+                                                    filename: filename.clone(),
+                                                    content_type: mime,
+                                                });
+                                                msg_images.push(serde_json::json!({
+                                                    "file_id": file_id,
+                                                    "filename": filename,
+                                                }));
+                                            }
+                                        }
+                                    }
+                                }
                                 openfang_types::message::ContentBlock::ToolUse {
                                     id,
                                     name,
@@ -524,14 +562,15 @@ pub async fn get_agent_session(
                                 }
                                 // ToolResult blocks are handled in pass 2
                                 openfang_types::message::ContentBlock::ToolResult { .. } => {}
-                                _ => {}
+                                openfang_types::message::ContentBlock::Thinking { .. } => {}
+                                openfang_types::message::ContentBlock::Unknown => {}
                             }
                         }
                         texts.join("\n")
                     }
                 };
                 // Skip messages that are purely tool results (User role with only ToolResult blocks)
-                if content.is_empty() && tools.is_empty() {
+                if content.is_empty() && tools.is_empty() && msg_images.is_empty() {
                     continue;
                 }
                 let msg_idx = built_messages.len();

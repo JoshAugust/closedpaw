@@ -90,6 +90,18 @@ pub enum ContentBlock {
         /// The thinking/reasoning text.
         thinking: String,
     },
+    /// An attachment reference (file ID or path).
+    #[serde(rename = "attachment")]
+    Attachment {
+        /// Unique file ID (UUID from UPLOAD_REGISTRY) or absolute path.
+        id: String,
+        /// Optional MIME type.
+        #[serde(default)]
+        media_type: Option<String>,
+        /// Optional source path (if different from ID).
+        #[serde(default)]
+        path: Option<String>,
+    },
     /// Catch-all for unrecognized content block types (forward compatibility).
     #[serde(other)]
     Unknown,
@@ -142,8 +154,9 @@ impl MessageContent {
                     ContentBlock::Text { text, .. } => text.len(),
                     ContentBlock::ToolResult { content, .. } => content.len(),
                     ContentBlock::Thinking { thinking } => thinking.len(),
-                    ContentBlock::ToolUse { .. }
+                    | ContentBlock::ToolUse { .. }
                     | ContentBlock::Image { .. }
+                    | ContentBlock::Attachment { .. }
                     | ContentBlock::Unknown => 0,
                 })
                 .sum(),

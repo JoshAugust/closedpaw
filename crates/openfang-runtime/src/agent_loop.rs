@@ -23,6 +23,7 @@ use openfang_types::memory::{Memory, MemoryFilter, MemorySource};
 use openfang_types::message::{
     ContentBlock, Message, MessageContent, Role, StopReason, TokenUsage,
 };
+use openfang_types::media::{MediaAttachment, MediaSource, MediaType};
 use openfang_types::tool::{ToolCall, ToolDefinition};
 use std::collections::HashMap;
 use std::path::Path;
@@ -42,7 +43,7 @@ const BASE_RETRY_DELAY_MS: u64 = 1000;
 
 /// Timeout for individual tool executions (seconds).
 /// Raised from 60s to 120s for browser automation and long-running builds.
-const TOOL_TIMEOUT_SECS: u64 = 120;
+const TOOL_TIMEOUT_SECS: u64 = 240;
 
 /// Maximum consecutive MaxTokens continuations before returning partial response.
 /// Raised from 3 to 5 to allow longer-form generation.
@@ -135,6 +136,54 @@ pub struct AgentLoopResult {
     pub silent: bool,
     /// Reply directives extracted from the agent's response.
     pub directives: openfang_types::message::ReplyDirectives,
+}
+
+/// Hydrate Attachment blocks into base64 Image blocks.
+/// 
+/// This is called right before sending messages to the LLM driver,
+/// ensuring that session history stays small while the LLM receives
+/// the actual image data.
+pub fn hydrate_attachments(messages: &mut [Message]) {
+    let upload_dir = std::env::temp_dir().join("openfang_uploads");
+    for msg in messages {
+        if let MessageContent::Blocks(ref mut blocks) = msg.content {
+            for i in 0..blocks.len() {
+                if let ContentBlock::Attachment { id, path, media_type } = &blocks[i] {
+                    // Try to resolve path
+                    let real_path = if let Some(p) = path {
+                        std::path::PathBuf::from(p)
+                    } else {
+                        // Assume ID is a filename in upload_dir
+                        upload_dir.join(id)
+                    };
+
+                    if real_path.exists() {
+                        if let Ok(data) = std::fs::read(&real_path) {
+                            let mime = media_type.clone().unwrap_or_else(|| {
+                                match real_path.extension().and_then(|e| e.to_str()) {
+                                    Some("png") => "image/png".to_string(),
+                                    Some("jpg" | "jpeg") => "image/jpeg".to_string(),
+                                    Some("gif") => "image/gif".to_string(),
+                                    Some("webp") => "image/webp".to_string(),
+                                    _ => "image/png".to_string(),
+                                }
+                            });
+                            use base64::Engine;
+                            let b64 = base64::engine::general_purpose::STANDARD.encode(&data);
+                            blocks[i] = ContentBlock::Image {
+                                media_type: mime,
+                                data: b64,
+                            };
+                        } else {
+                            warn!(path = ?real_path, "Failed to read attachment file for hydration");
+                        }
+                    } else {
+                        warn!(path = ?real_path, "Attachment file not found for hydration");
+                    }
+                }
+            }
+        }
+    }
 }
 
 /// Run the agent execution loop for a single user message.
@@ -251,7 +300,32 @@ pub async fn run_agent_loop(
     // Add the user message to session history.
     // When content blocks are provided (e.g. text + image from a channel),
     // use multimodal message format so the LLM receives the image for vision.
-    if let Some(blocks) = user_content_blocks {
+    if let Some(mut blocks) = user_content_blocks {
+        // Vision Hack: If using LM Studio and the model is not a vision model,
+        // auto-describe images via the MediaEngine bridge.
+        if let Some(me) = media_engine {
+            if manifest.model.provider == "lmstudio" && !manifest.model.model.to_lowercase().contains("vl") {
+                for block in blocks.iter_mut() {
+                    if let ContentBlock::Image { media_type, data, .. } = block {
+                        let attachment = openfang_types::media::MediaAttachment {
+                            media_type: openfang_types::media::MediaType::Image,
+                            mime_type: media_type.clone(),
+                            source: openfang_types::media::MediaSource::Base64 {
+                                data: data.clone(),
+                                mime_type: media_type.clone(),
+                            },
+                            size_bytes: data.len() as u64,
+                        };
+                        if let Ok(understanding) = me.describe_image(&attachment).await {
+                            *block = ContentBlock::Text {
+                                text: format!("\n[Image Analysis (Local Vision Bridge)]: {}\n", understanding.description),
+                                provider_metadata: None,
+                            };
+                        }
+                    }
+                }
+            }
+        }
         session.messages.push(Message::user_with_blocks(blocks));
     } else {
         session.messages.push(Message::user(user_message));
@@ -261,20 +335,24 @@ pub async fn run_agent_loop(
     // System prompt goes into the separate `system` field.
     // NOTE: We build llm_messages BEFORE stripping images so the LLM
     // sees the full image data for the current turn.
-    let llm_messages: Vec<Message> = session
+    let mut llm_messages: Vec<Message> = session
         .messages
         .iter()
         .filter(|m| m.role != Role::System)
         .cloned()
         .collect();
 
+    // Hydrate attachments (convert paths/IDs to base64) BEFORE sending to LLM.
+    // This keeps session history clean but gives LLM sight of the images.
+    hydrate_attachments(&mut llm_messages);
+
     // Strip Image blocks from session to prevent base64 bloat.
     // The LLM already received them via llm_messages above.
     for msg in session.messages.iter_mut() {
         if let MessageContent::Blocks(blocks) = &mut msg.content {
-            let had_images = blocks.iter().any(|b| matches!(b, ContentBlock::Image { .. }));
-            if had_images {
-                blocks.retain(|b| !matches!(b, ContentBlock::Image { .. }));
+            let had_multimodal = blocks.iter().any(|b| matches!(b, ContentBlock::Image { .. } | ContentBlock::Attachment { .. }));
+            if had_multimodal {
+                blocks.retain(|b| !matches!(b, ContentBlock::Image { .. } | ContentBlock::Attachment { .. }));
                 if blocks.is_empty() {
                     blocks.push(ContentBlock::Text {
                         text: "[Image processed]".to_string(),
@@ -1258,7 +1336,32 @@ pub async fn run_agent_loop_streaming(
     // Add the user message to session history.
     // When content blocks are provided (e.g. text + image from a channel),
     // use multimodal message format so the LLM receives the image for vision.
-    if let Some(blocks) = user_content_blocks {
+    if let Some(mut blocks) = user_content_blocks {
+        // Vision Hack: If using LM Studio and the model is not a vision model,
+        // auto-describe images via the MediaEngine bridge.
+        if let Some(me) = media_engine {
+            if manifest.model.provider == "lmstudio" && !manifest.model.model.to_lowercase().contains("vl") {
+                for block in blocks.iter_mut() {
+                    if let ContentBlock::Image { media_type, data, .. } = block {
+                        let attachment = MediaAttachment {
+                            media_type: MediaType::Image,
+                            mime_type: media_type.clone(),
+                            source: MediaSource::Base64 {
+                                data: data.clone(),
+                                mime_type: media_type.clone(),
+                            },
+                            size_bytes: data.len() as u64,
+                        };
+                        if let Ok(understanding) = me.describe_image(&attachment).await {
+                            *block = ContentBlock::Text {
+                                text: format!("\n[Image Analysis (Local Vision Bridge)]: {}\n", understanding.description),
+                                provider_metadata: None,
+                            };
+                        }
+                    }
+                }
+            }
+        }
         session.messages.push(Message::user_with_blocks(blocks));
     } else {
         session.messages.push(Message::user(user_message));

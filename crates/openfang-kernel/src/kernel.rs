@@ -3290,6 +3290,10 @@ impl OpenFangKernel {
             },
             capabilities: ManifestCapabilities {
                 tools: def.tools.clone(),
+                memory_read: def.memory_read.clone(),
+                memory_write: def.memory_write.clone(),
+                agent_message: def.agent_message.clone(),
+                agent_spawn: def.agent_spawn,
                 ..Default::default()
             },
             tags: vec![
@@ -3300,9 +3304,31 @@ impl OpenFangKernel {
                 max_iterations: max_iter,
                 ..Default::default()
             }),
-            // Autonomous hands must run in Continuous mode so the background loop picks them up.
-            // Reactive (default) only fires on incoming messages, so autonomous hands would be inert.
-            schedule: if def.agent.max_iterations.is_some() {
+            // Hands now support native Temporal (Cron) and Event-Driven (Triggers) modes.
+            // If no explicit schedule/trigger is provided, fall back to Continuous (polling) 
+            // if max_iterations is set, otherwise Reactive.
+            schedule: if let Some(ref sched) = def.schedule {
+                match sched {
+                    openfang_hands::HandSchedule::Interval { seconds } => {
+                        ScheduleMode::Continuous {
+                            check_interval_secs: *seconds,
+                        }
+                    }
+                    openfang_hands::HandSchedule::Cron { expression, .. } => {
+                        ScheduleMode::Periodic {
+                            cron: expression.clone(),
+                        }
+                    }
+                }
+            } else if let Some(ref triggers) = def.triggers {
+                if !triggers.events.is_empty() {
+                    ScheduleMode::Proactive {
+                        conditions: vec![],
+                    }
+                } else {
+                    ScheduleMode::default()
+                }
+            } else if def.agent.max_iterations.is_some() {
                 ScheduleMode::Continuous {
                     check_interval_secs: 60,
                 }
@@ -3391,15 +3417,37 @@ impl OpenFangKernel {
         let fixed_agent_id = AgentId::from_string(hand_id);
         let agent_id = self.spawn_agent_with_parent(manifest, None, Some(fixed_agent_id))?;
 
-        // Restore triggers from the old agent under the new agent ID (#519).
+        // 1. Restore triggers from the old agent under the new agent ID (reactivation).
         if !saved_triggers.is_empty() {
-            let restored = self.triggers.restore_triggers(agent_id, saved_triggers);
-            if restored > 0 {
-                info!(
-                    old_agent = %old_agent_id.unwrap(),
-                    new_agent = %agent_id,
-                    restored,
-                    "Reassigned triggers after hand reactivation"
+            self.triggers.restore_triggers(agent_id, saved_triggers);
+        }
+
+        // 2. Register triggers defined explicitly in the HAND.toml definition.
+        if let Some(ref triggers) = def.triggers {
+            for trigger in &triggers.events {
+                let pattern = match trigger {
+                    openfang_hands::HandTrigger::MemoryUpdate { key_pattern } => {
+                        TriggerPattern::MemoryKeyPattern {
+                            key_pattern: key_pattern.clone(),
+                        }
+                    }
+                    openfang_hands::HandTrigger::Lifecycle { .. } => TriggerPattern::Lifecycle,
+                    openfang_hands::HandTrigger::System { keyword } => {
+                        TriggerPattern::SystemKeyword {
+                            keyword: keyword.clone(),
+                        }
+                    }
+                    openfang_hands::HandTrigger::Webhook { path } => {
+                        TriggerPattern::SystemKeyword {
+                            keyword: format!("webhook:{}", path),
+                        }
+                    }
+                };
+                self.triggers.register(
+                    agent_id,
+                    pattern,
+                    "Hand triggered by event: {{event}}".to_string(),
+                    0, // Unlimited fires
                 );
             }
         }
@@ -5753,6 +5801,27 @@ impl KernelHandle for OpenFangKernel {
         };
         let result = self
             .send_message(id, message)
+            .await
+            .map_err(|e| format!("Send failed: {e}"))?;
+        Ok(result.response)
+    }
+
+    async fn send_to_agent_with_blocks(
+        &self,
+        agent_id: &str,
+        message: &str,
+        blocks: Vec<openfang_types::message::ContentBlock>,
+    ) -> Result<String, String> {
+        let id: AgentId = match agent_id.parse() {
+            Ok(id) => id,
+            Err(_) => self
+                .registry
+                .find_by_name(agent_id)
+                .map(|e| e.id)
+                .ok_or_else(|| format!("Agent not found: {agent_id}"))?,
+        };
+        let result = self
+            .send_message_with_blocks(id, message, blocks)
             .await
             .map_err(|e| format!("Send failed: {e}"))?;
         Ok(result.response)

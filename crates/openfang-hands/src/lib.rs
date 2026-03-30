@@ -265,6 +265,43 @@ pub fn resolve_settings(
     }
 }
 
+// ─── Scheduling and Triggers ────────────────────────────────────────────────
+
+/// Type of schedule for a Hand.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case", tag = "type")]
+pub enum HandSchedule {
+    /// Polling at a fixed interval.
+    Interval { seconds: u64 },
+    /// Scheduled via cron expression.
+    Cron {
+        expression: String,
+        #[serde(default)]
+        timezone: Option<String>,
+    },
+}
+
+/// A trigger definition for a Hand.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case", tag = "type")]
+pub enum HandTrigger {
+    /// Wakes up when a memory key matches a pattern.
+    MemoryUpdate { key_pattern: String },
+    /// Wakes up on a lifecycle event (e.g. "started", "stopped").
+    Lifecycle { event_type: String },
+    /// Wakes up on a system event keyword.
+    System { keyword: String },
+    /// Wakes up on a webhook (requires kernel routing).
+    Webhook { path: String },
+}
+
+/// Collection of triggers for a Hand.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct HandTriggers {
+    #[serde(default)]
+    pub events: Vec<HandTrigger>,
+}
+
 /// Dashboard schema for a Hand's metrics.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct HandDashboard {
@@ -348,6 +385,18 @@ pub struct HandDefinition {
     /// MCP server allowlist for the spawned agent (empty = all).
     #[serde(default)]
     pub mcp_servers: Vec<String>,
+    /// Memory read allowlist (e.g. ["caffy.*"]).
+    #[serde(default)]
+    pub memory_read: Vec<String>,
+    /// Memory write allowlist.
+    #[serde(default)]
+    pub memory_write: Vec<String>,
+    /// Agent messaging allowlist (e.g. ["*"]).
+    #[serde(default)]
+    pub agent_message: Vec<String>,
+    /// Whether this Hand can spawn agents.
+    #[serde(default)]
+    pub agent_spawn: bool,
     /// Requirements that must be satisfied before activation.
     #[serde(default)]
     pub requires: Vec<HandRequirement>,
@@ -356,6 +405,12 @@ pub struct HandDefinition {
     pub settings: Vec<HandSetting>,
     /// Agent manifest template.
     pub agent: HandAgentConfig,
+    /// Execution schedule (Interval or Cron).
+    #[serde(default)]
+    pub schedule: Option<HandSchedule>,
+    /// Event-driven triggers.
+    #[serde(default)]
+    pub triggers: Option<HandTriggers>,
     /// Dashboard metrics schema.
     #[serde(default)]
     pub dashboard: HandDashboard,
