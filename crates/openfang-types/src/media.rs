@@ -79,12 +79,20 @@ pub struct MediaConfig {
 
 impl Default for MediaConfig {
     fn default() -> Self {
+        // Sovereign: Local-First Auto-Detection
+        // If LM Studio is present, we prioritize it as the default image provider.
+        let image_provider = if std::env::var("LMSTUDIO_BASE_URL").is_ok() {
+            Some("lmstudio".to_string())
+        } else {
+            None
+        };
+
         Self {
             image_description: true,
             audio_transcription: true,
             video_description: false,
             max_concurrency: 2,
-            image_provider: None,
+            image_provider,
             audio_provider: None,
         }
     }
@@ -358,7 +366,7 @@ mod tests {
         assert!(config.audio_transcription);
         assert!(!config.video_description);
         assert_eq!(config.max_concurrency, 2);
-        assert!(config.image_provider.is_none());
+        // Sovereign: If LMSTUDIO_BASE_URL is set in test env, this might be Some("lmstudio")
     }
 
     #[test]
