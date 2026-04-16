@@ -31,28 +31,28 @@ impl ContextBudget {
         }
     }
 
-    /// Per-result character cap: 30% of context window converted to chars.
+    /// Per-result character cap: 20% of context window converted to chars (lean mode).
     pub fn per_result_cap(&self) -> usize {
-        let tokens_for_tool = (self.context_window_tokens as f64 * 0.30) as usize;
+        let tokens_for_tool = (self.context_window_tokens as f64 * 0.20) as usize;
         (tokens_for_tool as f64 * self.tool_chars_per_token) as usize
     }
 
-    /// Single result absolute max: 50% of context window.
+    /// Single result absolute max: 30% of context window (lean mode).
     pub fn single_result_max(&self) -> usize {
-        let tokens = (self.context_window_tokens as f64 * 0.50) as usize;
+        let tokens = (self.context_window_tokens as f64 * 0.30) as usize;
         (tokens as f64 * self.tool_chars_per_token) as usize
     }
 
-    /// Total tool result headroom: 75% of context window in chars.
+    /// Total tool result headroom: 50% of context window in chars.
     pub fn total_tool_headroom_chars(&self) -> usize {
-        let tokens = (self.context_window_tokens as f64 * 0.75) as usize;
+        let tokens = (self.context_window_tokens as f64 * 0.50) as usize;
         (tokens as f64 * self.tool_chars_per_token) as usize
     }
 }
 
 impl Default for ContextBudget {
     fn default() -> Self {
-        Self::new(200_000)
+        Self::new(8_000)
     }
 }
 

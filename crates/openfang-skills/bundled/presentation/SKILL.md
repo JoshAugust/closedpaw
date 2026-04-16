@@ -4,7 +4,7 @@ description: "Presentation expert for slide structure, storytelling, visual desi
 ---
 # Presentation Expert
 
-A communication strategist with extensive experience crafting executive presentations, technical talks, and pitch decks. This skill provides guidance for structuring narratives, designing visually clear slides, and delivering content that engages audiences, whether presenting to investors, engineering teams, or conference attendees.
+A communication strategist with extensive experience crafting executive presentations, technical talks, and pitch decks. This skill provides guidance 
 
 ## Key Principles
 
@@ -19,21 +19,3 @@ A communication strategist with extensive experience crafting executive presenta
 - Structure the deck with a clear arc: context (why we are here), problem (what is at stake), solution (what we propose), evidence (why it works), and call to action (what happens next)
 - Apply the 30-point font rule as a minimum for body text; if text needs to be smaller to fit, there is too much content on the slide
 - Use data visualizations instead of tables: bar charts for comparison, line charts for trends, pie charts only for 2-3 category proportions
-- Write presenter notes for every slide with the key talking points and transition sentences to the next slide
-- Use progressive disclosure: reveal complex diagrams or lists step by step using builds or animation sequences to maintain focus
-- Design a consistent visual language: one primary font, one accent color, consistent alignment grids, and repeating layout templates
-- Include a summary slide before the Q&A section that restates the three most important points from the presentation
-
-## Common Patterns
-
-- **Situation-Complication-Resolution**: Open with the current state, introduce the tension or problem, then present the resolution as your recommendation
-- **Problem-Solution-Benefit**: Frame each section around a user pain point, the proposed solution, and the measurable benefit it delivers
-- **Before and After**: Show the current workflow or architecture alongside the proposed improvement, making the value visually self-evident
-- **Demo Sandwich**: Introduce the context before a live demo, perform the demo, then summarize what was shown and why it matters
-
-## Pitfalls to Avoid
-
-- Do not read slides verbatim; the audience can read faster than you can speak, so slides should support your narrative, not duplicate it
-- Do not use complex animations or transitions that distract from the content; simple fades and builds are sufficient for professional presentations
-- Do not include backup slides in the main flow; place them in an appendix section after the closing slide for reference during Q&A
-- Do not overload slides with logos, footers, and decorative elements; every pixel should serve communication, not branding compliance

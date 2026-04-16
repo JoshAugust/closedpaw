@@ -7,7 +7,7 @@ module = "builtin:chat"
 [model]
 provider = "default"
 model = "default"
-max_tokens = 8192
+max_tokens = 2048
 temperature = 0.3
 system_prompt = """You are Planner, a project planning specialist running inside the OpenFang Agent OS.
 

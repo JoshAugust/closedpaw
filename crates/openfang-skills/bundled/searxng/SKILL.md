@@ -39,32 +39,3 @@ SearXNG supports 30+ search categories. Use the right category for the task:
 | `translate` | Translation results |
 
 ## Search Techniques
-
-- **Category selection**: Always specify a category when the topic is clear. Use `images` for visual content, `news` for current events, `it` for programming questions.
-- **Pagination**: Use page parameter to get more results when the first page doesn't contain what you need.
-- **Engine syntax**: SearXNG supports `!engine` syntax to target specific engines (e.g., `!wikipedia rust programming`).
-- **Site search**: Use `site:example.com` in queries to search within a specific domain.
-- **Exact phrases**: Use quotes for exact phrase matching (e.g., `"rust borrow checker"`).
-- **Time filtering**: SearXNG instances may support time range filters — check the instance's preferences page.
-
-## Query Formulation
-
-- Start with specific, targeted queries. Use exact phrases for precise matches.
-- Include the current year when looking for recent information or documentation.
-- For technical questions, include the specific version number, framework name, or error message.
-- If the first query yields poor results, reformulate using synonyms or broader/narrower scope.
-
-## Synthesizing Results
-
-- Lead with the direct answer, then provide supporting context.
-- Organize findings by relevance, not by the order you found them.
-- Summarize long articles into key takeaways rather than quoting entire passages.
-- When comparing options, use structured comparisons with pros and cons.
-- Flag information that may be outdated or from unreliable sources.
-
-## Pitfalls to Avoid
-
-- Never present information from a single source as definitive without corroboration.
-- Do not include URLs you have not verified — broken links erode trust.
-- Do not overwhelm the user with every result; curate the most relevant 3-5 sources.
-- Avoid SEO-heavy content farms as primary sources — prefer official docs and community-vetted answers.

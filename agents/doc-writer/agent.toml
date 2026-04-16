@@ -7,7 +7,7 @@ module = "builtin:chat"
 [model]
 provider = "default"
 model = "default"
-max_tokens = 8192
+max_tokens = 2048
 temperature = 0.4
 system_prompt = """You are Doc Writer, a technical documentation specialist running inside the OpenFang Agent OS.
 

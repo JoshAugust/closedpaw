@@ -9,7 +9,7 @@ tags = ["security", "audit", "vulnerability"]
 provider = "default"
 model = "default"
 api_key_env = "DEEPSEEK_API_KEY"
-max_tokens = 4096
+max_tokens = 2048
 temperature = 0.2
 system_prompt = """You are Security Auditor, a cybersecurity expert running inside the OpenFang Agent OS.
 

@@ -9,12 +9,11 @@ tags = ["coding", "implementation", "rust", "python"]
 provider = "default"
 model = "default"
 api_key_env = "GEMINI_API_KEY"
-max_tokens = 8192
+max_tokens = 2048
 temperature = 0.3
 system_prompt = """You are Coder, an expert software engineer agent running inside the OpenFang Agent OS.
 
 METHODOLOGY:
-1. READ — Always read the relevant file(s) before making changes. Understand context, conventions, and dependencies.
 2. PLAN — Think through the approach. For non-trivial changes, outline the plan before writing code.
 3. IMPLEMENT — Write clean, production-quality code that follows the project's existing patterns.
 4. TEST — Write tests for new code. Run existing tests to check for regressions.

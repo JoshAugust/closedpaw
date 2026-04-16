@@ -88,7 +88,7 @@ pub fn build_system_prompt(ctx: &PromptContext) -> String {
     if !ctx.is_subagent {
         if let Some(ref agents) = ctx.agents_md {
             if !agents.trim().is_empty() {
-                sections.push(cap_str(agents, 2000));
+                sections.push(cap_str(agents, 800));
             }
         }
     }
@@ -136,7 +136,7 @@ pub fn build_system_prompt(ctx: &PromptContext) -> String {
             if !heartbeat.trim().is_empty() {
                 sections.push(format!(
                     "## Heartbeat Checklist\n{}",
-                    cap_str(heartbeat, 1000)
+                    cap_str(heartbeat, 400)
                 ));
             }
         }
@@ -188,7 +188,7 @@ pub fn build_system_prompt(ctx: &PromptContext) -> String {
                 if !has_user_name && ctx.user_name.is_none() {
                     sections.push(format!(
                         "## First-Run Protocol\n{}",
-                        cap_str(bootstrap, 1500)
+                        cap_str(bootstrap, 500)
                     ));
                 }
             }
@@ -224,19 +224,10 @@ fn build_identity_section(ctx: &PromptContext) -> String {
 
 /// Static tool-call behavior directives.
 const TOOL_CALL_BEHAVIOR: &str = "\
-## Tool Call Behavior
-- When you need to use a tool, call it immediately. Do not narrate or explain routine tool calls.
-- Only explain tool calls when the action is destructive, unusual, or the user explicitly asked for an explanation.
-- Prefer action over narration. If you can answer by using a tool, do it.
-- When executing multiple sequential tool calls, batch them — don't output reasoning between each call.
-- If a tool returns useful results, present the KEY information, not the raw output.
-- When web_fetch or web_search returns content, you MUST include the relevant data in your response. \
-Quote specific facts, numbers, or passages from the fetched content. Never say you fetched something \
-without sharing what you found.
-- Start with the answer, not meta-commentary about how you'll help.
-- IMPORTANT: If your instructions or persona mention a shell command, script path, or code snippet, \
-execute it via the appropriate tool call (shell_exec, file_write, etc.). Never output commands as \
-code blocks — always call the tool instead.";
+## Tools
+- Call tools directly. No narration unless destructive.
+- Batch sequential calls. Share key results, not raw output.
+- Execute commands via tools, never as code blocks.";
 
 /// Build the grouped tools section (Section 3).
 pub fn build_tools_section(granted_tools: &[String]) -> String {
@@ -283,7 +274,7 @@ pub fn build_canonical_context_message(ctx: &PromptContext) -> Option<String> {
     ctx.canonical_context
         .as_ref()
         .filter(|c| !c.is_empty())
-        .map(|c| format!("[Previous conversation context]\n{}", cap_str(c, 500)))
+        .map(|c| format!("[Previous conversation context]\n{}", cap_str(c, 250)))
 }
 
 /// Build the memory section (Section 4).
@@ -325,7 +316,7 @@ fn build_skills_section(skill_summary: &str, prompt_context: &str) -> String {
     }
     if !prompt_context.is_empty() {
         out.push('\n');
-        out.push_str(&cap_str(prompt_context, 2000));
+        out.push_str(&cap_str(prompt_context, 800));
     }
     out
 }
@@ -350,7 +341,7 @@ fn build_persona_section(
     // Identity file (IDENTITY.md) — personality at a glance, before SOUL.md
     if let Some(identity) = identity_md {
         if !identity.trim().is_empty() {
-            parts.push(format!("## Identity\n{}", cap_str(identity, 500)));
+            parts.push(format!("## Identity\n{}", cap_str(identity, 200)));
         }
     }
 
@@ -359,20 +350,20 @@ fn build_persona_section(
             let sanitized = strip_code_blocks(soul);
             parts.push(format!(
                 "## Persona\nEmbody this identity in your tone and communication style. Be natural, not stiff or generic.\n{}",
-                cap_str(&sanitized, 1000)
+                cap_str(&sanitized, 400)
             ));
         }
     }
 
     if let Some(user) = user_md {
         if !user.trim().is_empty() {
-            parts.push(format!("## User Context\n{}", cap_str(user, 500)));
+            parts.push(format!("## User Context\n{}", cap_str(user, 300)));
         }
     }
 
     if let Some(memory) = memory_md {
         if !memory.trim().is_empty() {
-            parts.push(format!("## Long-Term Memory\n{}", cap_str(memory, 500)));
+            parts.push(format!("## Long-Term Memory\n{}", cap_str(memory, 300)));
         }
     }
 
@@ -388,13 +379,7 @@ fn build_user_section(user_name: Option<&str>) -> String {
                  when appropriate (greetings, farewells, etc.), but don't overuse it."
             )
         }
-        None => "## User Profile\n\
-             You don't know the user's name yet. On your FIRST reply in this conversation, \
-             warmly introduce yourself by your agent name and ask what they'd like to be called. \
-             Once they tell you, immediately use the `memory_store` tool with \
-             key \"user_name\" and their name as the value so you remember it for future sessions. \
-             Keep the introduction brief — don't let it overshadow their actual request."
-            .to_string(),
+        None => "## User\nName unknown. Ask on first message, store with memory_store key \"user_name\".".to_string(),
     }
 }
 
@@ -464,22 +449,14 @@ fn build_peer_agents_section(self_name: &str, peers: &[(String, String, String)]
 /// Static safety section.
 const SAFETY_SECTION: &str = "\
 ## Safety
-- Prioritize safety and human oversight over task completion.
-- NEVER auto-execute purchases, payments, account deletions, or irreversible actions without explicit user confirmation.
-- If a tool could cause data loss, explain what it will do and confirm first.
-- If you cannot accomplish a task safely, explain the limitation.
-- When in doubt, ask the user.";
+- Confirm before destructive/irreversible actions. When unsure, ask.";
 
 /// Static operational guidelines (replaces STABILITY_GUIDELINES).
 const OPERATIONAL_GUIDELINES: &str = "\
-## Operational Guidelines
-- Do NOT retry a tool call with identical parameters if it failed. Try a different approach.
-- If a tool returns an error, analyze the error before calling it again.
-- Prefer targeted, specific tool calls over broad ones.
-- Plan your approach before executing multiple tool calls.
-- If you cannot accomplish a task after a few attempts, explain what went wrong instead of looping.
-- Never call the same tool more than 3 times with the same parameters.
-- If a message requires no response (simple acknowledgments, reactions, messages not directed at you), respond with exactly NO_REPLY.";
+## Guidelines
+- Never retry identical failed tool calls. Try different approach.
+- Max 3 retries per tool. If stuck, explain and stop.
+- NO_REPLY for messages not directed at you.";
 
 // ---------------------------------------------------------------------------
 // Tool metadata helpers

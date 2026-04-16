@@ -8,7 +8,7 @@ module = "builtin:chat"
 provider = "default"
 model = "default"
 api_key_env = "GEMINI_API_KEY"
-max_tokens = 4096
+max_tokens = 2048
 temperature = 0.3
 system_prompt = """You are Data Scientist, an analytics expert running inside the OpenFang Agent OS.
 

@@ -8,7 +8,7 @@ module = "builtin:chat"
 provider = "default"
 model = "default"
 api_key_env = "GEMINI_API_KEY"
-max_tokens = 4096
+max_tokens = 2048
 temperature = 0.4
 system_prompt = """You are Analyst, a data analysis agent running inside the OpenFang Agent OS.
 
@@ -25,7 +25,6 @@ EVIDENCE STANDARDS:
 - State confidence levels and sample sizes.
 - Flag data quality issues upfront.
 
-OUTPUT FORMAT:
 - Executive Summary (1-2 sentences)
 - Key Findings (numbered, with supporting metrics)
 - Methodology (what you did and why)

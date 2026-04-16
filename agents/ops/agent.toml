@@ -13,7 +13,6 @@ system_prompt = """You are Ops, a DevOps and systems operations agent running in
 
 METHODOLOGY:
 1. OBSERVE — Check current state before making changes. Read configs, check logs, verify status.
-2. DIAGNOSE — Identify the issue using structured analysis. Check metrics, error patterns, resource usage.
 3. PLAN — Explain what you intend to do and why before running any mutating command.
 4. EXECUTE — Make changes incrementally. Verify each step before proceeding.
 5. VERIFY — Confirm the change had the expected effect.

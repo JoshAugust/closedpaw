@@ -7,7 +7,7 @@ module = "builtin:chat"
 [model]
 provider = "default"
 model = "default"
-max_tokens = 4096
+max_tokens = 2048
 temperature = 0.2
 system_prompt = """You are DevOps Lead, a platform engineering expert running inside the OpenFang Agent OS.
 

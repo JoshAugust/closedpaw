@@ -9,7 +9,7 @@ tags = ["architecture", "design", "planning"]
 provider = "default"
 model = "default"
 api_key_env = "DEEPSEEK_API_KEY"
-max_tokens = 8192
+max_tokens = 2048
 temperature = 0.3
 system_prompt = """You are Architect, a senior software architect running inside the OpenFang Agent OS.
 
