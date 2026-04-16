@@ -150,6 +150,53 @@ pub type PhaseCallback = Arc<dyn Fn(LoopPhase) + Send + Sync>;
 
 /// Result of an agent loop execution.
 #[derive(Debug)]
+
+/// Hydrate Attachment blocks into base64 Image blocks.
+/// 
+/// This is called right before sending messages to the LLM driver,
+/// ensuring that session history stays small while the LLM receives
+/// the actual image data.
+pub fn hydrate_attachments(messages: &mut [Message]) {
+    let upload_dir = std::env::temp_dir().join("openfang_uploads");
+    for msg in messages {
+        if let MessageContent::Blocks(ref mut blocks) = msg.content {
+            for i in 0..blocks.len() {
+                if let ContentBlock::Attachment { id, path, media_type } = &blocks[i] {
+                    let real_path = if let Some(p) = path {
+                        std::path::PathBuf::from(p)
+                    } else {
+                        upload_dir.join(id)
+                    };
+
+                    if real_path.exists() {
+                        if let Ok(data) = std::fs::read(&real_path) {
+                            let mime = media_type.clone().unwrap_or_else(|| {
+                                match real_path.extension().and_then(|e| e.to_str()) {
+                                    Some("png") => "image/png".to_string(),
+                                    Some("jpg" | "jpeg") => "image/jpeg".to_string(),
+                                    Some("gif") => "image/gif".to_string(),
+                                    Some("webp") => "image/webp".to_string(),
+                                    _ => "image/png".to_string(),
+                                }
+                            });
+                            use base64::Engine;
+                            let b64 = base64::engine::general_purpose::STANDARD.encode(&data);
+                            blocks[i] = ContentBlock::Image {
+                                media_type: mime,
+                                data: b64,
+                            };
+                        } else {
+                            warn!(path = ?real_path, "Failed to read attachment file for hydration");
+                        }
+                    } else {
+                        warn!(path = ?real_path, "Attachment file not found for hydration");
+                    }
+                }
+            }
+        }
+    }
+}
+
 pub struct AgentLoopResult {
     /// The final text response from the agent.
     pub response: String,
@@ -289,22 +336,25 @@ pub async fn run_agent_loop(
     // System prompt goes into the separate `system` field.
     // NOTE: We build llm_messages BEFORE stripping images so the LLM
     // sees the full image data for the current turn.
-    let llm_messages: Vec<Message> = session
+    let mut llm_messages: Vec<Message> = session
         .messages
         .iter()
         .filter(|m| m.role != Role::System)
         .cloned()
         .collect();
 
-    // Strip Image blocks from session to prevent base64 bloat.
+    // Hydrate attachments (convert paths/IDs to base64) BEFORE sending to LLM.
+    hydrate_attachments(&mut llm_messages);
+
+    // Strip Image/Attachment blocks from session to prevent base64 bloat.
     // The LLM already received them via llm_messages above.
     for msg in session.messages.iter_mut() {
         if let MessageContent::Blocks(blocks) = &mut msg.content {
             let had_images = blocks
                 .iter()
-                .any(|b| matches!(b, ContentBlock::Image { .. }));
+                .any(|b| matches!(b, ContentBlock::Image { .. } | ContentBlock::Attachment { .. }));
             if had_images {
-                blocks.retain(|b| !matches!(b, ContentBlock::Image { .. }));
+                blocks.retain(|b| !matches!(b, ContentBlock::Image { .. } | ContentBlock::Attachment { .. }));
                 if blocks.is_empty() {
                     blocks.push(ContentBlock::Text {
                         text: "[Image processed]".to_string(),
@@ -1486,22 +1536,25 @@ pub async fn run_agent_loop_streaming(
         session.messages.push(Message::user(user_message));
     }
 
-    let llm_messages: Vec<Message> = session
+    let mut llm_messages: Vec<Message> = session
         .messages
         .iter()
         .filter(|m| m.role != Role::System)
         .cloned()
         .collect();
 
-    // Strip Image blocks from session to prevent base64 bloat.
+    // Hydrate attachments (convert paths/IDs to base64) BEFORE sending to LLM.
+    hydrate_attachments(&mut llm_messages);
+
+    // Strip Image/Attachment blocks from session to prevent base64 bloat.
     // The LLM already received them via llm_messages above.
     for msg in session.messages.iter_mut() {
         if let MessageContent::Blocks(blocks) = &mut msg.content {
             let had_images = blocks
                 .iter()
-                .any(|b| matches!(b, ContentBlock::Image { .. }));
+                .any(|b| matches!(b, ContentBlock::Image { .. } | ContentBlock::Attachment { .. }));
             if had_images {
-                blocks.retain(|b| !matches!(b, ContentBlock::Image { .. }));
+                blocks.retain(|b| !matches!(b, ContentBlock::Image { .. } | ContentBlock::Attachment { .. }));
                 if blocks.is_empty() {
                     blocks.push(ContentBlock::Text {
                         text: "[Image processed]".to_string(),
